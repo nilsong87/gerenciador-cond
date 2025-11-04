@@ -1,0 +1,4 @@
+# Ignorar arquivos sensíveis
+firebaseConfig.js
+.env
+service-account-key.json

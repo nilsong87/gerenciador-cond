@@ -1,0 +1,65 @@
+type User @table {
+  displayName: String!
+  email: String!
+  role: String!
+  apartmentNumber: String
+  phoneNumber: String
+  photoUrl: String
+}
+
+type Announcement @table {
+  title: String!
+  content: String!
+  createdAt: Timestamp!
+  expiresAt: Timestamp
+  admin: User
+}
+
+type CommonArea @table {
+  name: String!
+  capacity: Int!
+  createdAt: Timestamp!
+  description: String
+  bookingRules: String
+}
+
+type Reservation @table {
+  startDate: Timestamp!
+  endDate: Timestamp!
+  status: String!
+  createdAt: Timestamp!
+  notes: String
+  resident: User
+  commonArea: CommonArea
+}
+
+type Payment @table {
+  amount: Float!
+  paymentDate: Timestamp!
+  type: String!
+  status: String!
+  description: String
+  dueDate: Timestamp
+  resident: User
+}
+
+type Incident @table {
+  title: String!
+  type: String!
+  description: String!
+  location: String
+  status: String!
+  reportedBy: String!
+  apartment: String!
+  timestamp: Timestamp!
+}
+
+type LostAndFoundItem @table {
+  title: String!
+  description: String!
+  status: String!
+  imageUrl: String
+  reportedBy: String!
+  apartment: String!
+  timestamp: Timestamp!
+}
