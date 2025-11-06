@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Nega o acesso a todos os outros caminhos por padrão.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Permite leitura autenticada e escrita autenticada para imagens de ocorrências.
+    match /ocorrencias/{incidentFile} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+    }
+
+    // Permite leitura autenticada e escrita autenticada para imagens de achados e perdidos.
+    match /lostAndFound/{imageId} {
+      allow read: if request.auth != null; // Permite que todos vejam as imagens dos itens
+      allow write: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024 // Limite de 5MB
+                    && request.resource.contentType.matches('image/.*'); // Apenas imagens
+    }
+  }
+}
