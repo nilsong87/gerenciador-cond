@@ -390,26 +390,43 @@ function loadAdminChartsData() {
 
                 if (chartInstances['reservationsChart']) chartInstances['reservationsChart'].destroy();
                 chartInstances['reservationsChart'] = new Chart(reservationsCtx.getContext('2d'), {
-                    type: 'bar',
+                    type: 'doughnut',
                     data: {
                         labels: Object.keys(reservationsByArea),
                         datasets: [{
                             label: 'Número de Reservas',
                             data: Object.values(reservationsByArea),
-                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                            borderColor: 'rgba(102, 126, 234, 1)',
-                            borderWidth: 2,
-                            borderRadius: 8
+                            backgroundColor: [
+                                'rgba(102, 126, 234, 0.8)',
+                                'rgba(255, 159, 64, 0.8)',
+                                'rgba(255, 205, 86, 0.8)',
+                                'rgba(75, 192, 192, 0.8)',
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(153, 102, 255, 0.8)',
+                                'rgba(201, 203, 207, 0.8)'
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 4,
+                            hoverOffset: 15
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                            x: { grid: { display: false } }
-                        }
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Reservas por Área nos Últimos 30 Dias'
+                            }
+                        },
+                        cutout: '70%'
                     }
                 });
             });
@@ -432,7 +449,11 @@ function loadAdminChartsData() {
                     labels: ['Abertas', 'Em Andamento', 'Resolvidas'],
                     datasets: [{
                         data: [incidentsByStatus.open, incidentsByStatus.in_progress, incidentsByStatus.resolved],
-                        backgroundColor: ['rgba(250, 112, 154, 0.8)', 'rgba(255, 193, 7, 0.8)', 'rgba(67, 233, 123, 0.8)'],
+                        backgroundColor: [
+                            'rgba(250, 112, 154, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(67, 233, 123, 0.8)'
+                        ],
                         borderColor: ['#fff'],
                         borderWidth: 4,
                         hoverOffset: 15
@@ -442,7 +463,11 @@ function loadAdminChartsData() {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+                        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                        title: {
+                            display: true,
+                            text: 'Status das Ocorrências'
+                        }
                     },
                     cutout: '70%'
                 }
