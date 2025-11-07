@@ -1,7 +1,10 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners } from './ui.js';
 import { userRole } from './auth.js';
+import { renderDashboard } from './dashboard.js';
 import { db } from './firebase.js';
 import { cleanup } from './dashboard.js';
+import { renderNotices } from './notices.js';
+import { renderIncidents } from './incidents.js';
 
 function renderAdmin() {
     cleanup();
@@ -23,10 +26,10 @@ function renderAdmin() {
                             <i class="fas fa-cogs me-2"></i>Painel de Administração
                         </h1>
                         <div class="btn-group">
-                            <button class="btn btn-premium btn-success-premium" onclick="generateSystemReport()">
+                            <button id="generate-report-btn" class="btn btn-premium btn-success-premium">
                                 <i class="fas fa-file-export me-2"></i>Relatório
                             </button>
-                            <button class="btn btn-premium btn-primary-premium" onclick="showSystemSettings()">
+                            <button id="system-settings-btn" class="btn btn-premium btn-primary-premium">
                                 <i class="fas fa-sliders-h me-2"></i>Configurações
                             </button>
                         </div>
@@ -90,7 +93,7 @@ function renderAdmin() {
             <!-- Quick Actions -->
             <div class="row mb-5">
                 <div class="col-12">
-                    <div class="card-premium">
+                    <div class="card-premium animate-slide-up">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-bolt me-2"></i>Ações Rápidas
@@ -99,43 +102,38 @@ function renderAdmin() {
                         <div class="card-body-premium">
                             <div class="row text-center">
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-primary w-100 h-100 py-3" 
-                                            onclick="renderNotices()">
+                                    <button id="render-notices-btn" class="btn btn-premium btn-outline-primary w-100 h-100 py-3">
                                         <i class="fas fa-bullhorn fa-2x mb-2"></i><br>
                                         Avisos
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-success w-100 h-100 py-3" 
-                                            onclick="showUserRegistration()">
+                                    <button id="user-registration-btn" class="btn btn-premium btn-outline-success w-100 h-100 py-3">
                                         <i class="fas fa-user-plus fa-2x mb-2"></i><br>
                                         Add Usuário
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-warning w-100 h-100 py-3" 
-                                            onclick="renderIncidents()">
+                                    <button id="render-incidents-btn" class="btn btn-premium btn-outline-warning w-100 h-100 py-3">
                                         <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
-                                        Ocorrências
+         
+                               Ocorrências
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-info w-100 h-100 py-3" 
-                                            onclick="showFinancialPanel()">
+                                    <button id="financial-panel-btn" class="btn btn-premium btn-outline-info w-100 h-100 py-3">
                                         <i class="fas fa-chart-line fa-2x mb-2"></i><br>
                                         Financeiro
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-danger w-100 h-100 py-3" 
-                                            onclick="showBackupPanel()">
+                                    <button id="backup-panel-btn" class="btn btn-premium btn-outline-danger w-100 h-100 py-3">
                                         <i class="fas fa-database fa-2x mb-2"></i><br>
                                         Backup
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button class="btn btn-premium btn-outline-dark w-100 h-100 py-3" 
-                                            onclick="showAnalyticsPanel()">
+                                    <button id="analytics-panel-btn" class="btn btn-premium btn-outline-dark w-100 h-100 py-3">
                                         <i class="fas fa-chart-bar fa-2x mb-2"></i><br>
                                         Analytics
                                     </button>
@@ -149,12 +147,12 @@ function renderAdmin() {
             <!-- User Management -->
             <div class="row">
                 <div class="col-12">
-                    <div class="card-premium">
+                    <div class="card-premium animate-slide-up">
                         <div class="card-header-premium d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-users me-2"></i>Gerenciar Usuários
                             </h5>
-                            <button class="btn btn-premium btn-primary-premium btn-sm" onclick="showUserRegistration()">
+                            <button id="new-user-btn" class="btn btn-premium btn-primary-premium btn-sm">
                                 <i class="fas fa-plus me-2"></i>Novo Usuário
                             </button>
                         </div>
@@ -191,6 +189,17 @@ function renderAdmin() {
 
     setActiveNavItem('renderAdmin()');
     loadEnhancedAdminData();
+    initGlobalEventListeners();
+
+    document.getElementById('generate-report-btn').addEventListener('click', generateSystemReport);
+    document.getElementById('system-settings-btn').addEventListener('click', showSystemSettings);
+    document.getElementById('render-notices-btn').addEventListener('click', renderNotices);
+    document.getElementById('user-registration-btn').addEventListener('click', showUserRegistration);
+    document.getElementById('render-incidents-btn').addEventListener('click', renderIncidents);
+    document.getElementById('financial-panel-btn').addEventListener('click', showFinancialPanel);
+    document.getElementById('backup-panel-btn').addEventListener('click', showBackupPanel);
+    document.getElementById('analytics-panel-btn').addEventListener('click', showAnalyticsPanel);
+    document.getElementById('new-user-btn').addEventListener('click', showUserRegistration);
 }
 
 function loadEnhancedAdminData() {

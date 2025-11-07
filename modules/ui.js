@@ -1,5 +1,24 @@
 import { userRole, currentUser, logout } from './auth.js';
 
+let chartInstances = {};
+let firestoreListeners = {};
+
+function cleanup() {
+    for (const chartId in chartInstances) {
+        if (chartInstances.hasOwnProperty(chartId)) {
+            chartInstances[chartId].destroy();
+            delete chartInstances[chartId];
+        }
+    }
+
+    for (const listener in firestoreListeners) {
+        if (firestoreListeners.hasOwnProperty(listener)) {
+            firestoreListeners[listener]();
+        }
+    }
+    firestoreListeners = {};
+}
+
 // Loading Screen Functions
 function showLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
@@ -62,13 +81,13 @@ function getAlertIcon(type) {
 }
 
 // Navigation Functions
-function setActiveNavItem(activeItem) {
+function setActiveNavItem(activeItemId) {
     document.querySelectorAll('.nav-link-premium').forEach(item => {
         item.classList.remove('active');
     });
     
-    if (activeItem) {
-        const itemToActivate = document.querySelector(`[onclick="${activeItem}"]`);
+    if (activeItemId) {
+        const itemToActivate = document.getElementById(activeItemId);
         if (itemToActivate) {
             itemToActivate.classList.add('active');
         }
@@ -83,7 +102,7 @@ function renderNavigation() {
             <div class="navbar-container">
                 <!-- Logo Section - Lado Esquerdo -->
                 <div class="navbar-brand-section">
-                    <a class="navbar-brand-premium" href="#" onclick="renderDashboard()">
+                    <a class="navbar-brand-premium" href="#" id="nav-logo">
                         <i class="fas fa-building"></i>
                         <span>Condomínio Elite</span>
                     </a>
@@ -98,43 +117,43 @@ function renderNavigation() {
                 <div class="custom-navbar-collapse" id="customNavbarCollapse">
                     <ul class="navbar-nav-center">
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderDashboard(); setActiveNavItem('renderDashboard()')">
+                            <a class="nav-link-premium" href="#" id="nav-dashboard">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderPackages(); setActiveNavItem('renderPackages()')">
+                            <a class="nav-link-premium" href="#" id="nav-packages">
                                 <i class="fas fa-box me-2"></i>Encomendas
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderReservations(); setActiveNavItem('renderReservations()')">
+                            <a class="nav-link-premium" href="#" id="nav-reservations">
                                 <i class="fas fa-calendar-alt me-2"></i>Reservas
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderVisitors(); setActiveNavItem('renderVisitors()')">
+                            <a class="nav-link-premium" href="#" id="nav-visitors">
                                 <i class="fas fa-users me-2"></i>Visitantes
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderIncidents(); setActiveNavItem('renderIncidents()')">
+                            <a class="nav-link-premium" href="#" id="nav-incidents">
                                 <i class="fas fa-exclamation-triangle me-2"></i>Ocorrências
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderNotices(); setActiveNavItem('renderNotices()')">
+                            <a class="nav-link-premium" href="#" id="nav-notices">
                                 <i class="fas fa-bullhorn me-2"></i>Avisos
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderLostAndFound(); setActiveNavItem('renderLostAndFound()')">
+                            <a class="nav-link-premium" href="#" id="nav-lost-found">
                                 <i class="fas fa-search-location me-2"></i>Achados e Perdidos
                             </a>
                         </li>
                         ${isAdmin ? `
                         <li class="nav-item">
-                            <a class="nav-link-premium" href="#" onclick="renderAdmin(); setActiveNavItem('renderAdmin()')">
+                            <a class="nav-link-premium" href="#" id="nav-admin">
                                 <i class="fas fa-cogs me-2"></i>Administração
                             </a>
                         </li>
@@ -145,7 +164,7 @@ function renderNavigation() {
                 <!-- Right Section - Lado Direito -->
                 <div class="navbar-right">
                     <!-- Notification Bell -->
-                    <a class="nav-link-premium notification-bell" href="#" onclick="markNoticesAsRead(); renderNotices();">
+                    <a class="nav-link-premium notification-bell" href="#" id="nav-notifications">
                         <i class="fas fa-bell"></i>
                         <span class="notification-dot"></span>
                     </a>
@@ -174,18 +193,18 @@ function renderNavigation() {
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="#" onclick="showUserProfile()">
+                                <a class="dropdown-item" href="#" id="nav-user-profile">
                                     <i class="fas fa-user me-2"></i>Meu Perfil
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#" onclick="showSettings()">
+                                <a class="dropdown-item" href="#" id="nav-settings">
                                     <i class="fas fa-cog me-2"></i>Configurações
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item text-danger" href="#" onclick="logout()">
+                                <a class="dropdown-item text-danger" href="#" id="nav-logout">
                                     <i class="fas fa-sign-out-alt me-2"></i>Sair
                                 </a>
                             </li>
@@ -212,10 +231,46 @@ function showSettings() {
     showAlert('Funcionalidade de configurações em desenvolvimento.', 'info');
 }
 
+function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    
+    // Salvar preferência do usuário
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+        showAlert('Tema escuro ativado', 'info');
+    } else {
+        localStorage.setItem('theme', 'light');
+        showAlert('Tema claro ativado', 'info');
+    }
+}
+
 // Initialize navigation active state
 function initNavigation() {
     // Set dashboard as active by default
-    setActiveNavItem('renderDashboard()');
+    setActiveNavItem('nav-dashboard');
+}
+
+// Função para inicializar ouvintes de eventos globais, como o menu hambúrguer
+function initGlobalEventListeners() {
+    // Lógica de alternância do menu hambúrguer personalizado
+    const customMenuToggler = document.querySelector('.custom-menu-toggle');
+    const customNavbarCollapse = document.getElementById('customNavbarCollapse');
+
+    if (customMenuToggler && customNavbarCollapse) {
+        customMenuToggler.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevenir comportamento padrão
+            customNavbarCollapse.classList.toggle('show');
+            const isExpanded = customNavbarCollapse.classList.contains('show');
+            customMenuToggler.setAttribute('aria-expanded', isExpanded);
+        });
+    }
+}
+
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
 }
 
 // Export all functions
@@ -229,15 +284,11 @@ export {
     markNoticesAsRead, 
     showUserProfile, 
     showSettings,
-    initNavigation
+    toggleTheme,
+    initNavigation,
+    initGlobalEventListeners,
+    cleanup,
+    chartInstances,
+    firestoreListeners,
+    sanitizeHTML
 };
-
-// Make functions globally available for HTML onclick attributes
-window.showLoadingScreen = showLoadingScreen;
-window.hideLoadingScreen = hideLoadingScreen;
-window.showAlert = showAlert;
-window.setActiveNavItem = setActiveNavItem;
-window.markNoticesAsRead = markNoticesAsRead;
-window.showUserProfile = showUserProfile;
-window.showSettings = showSettings;
-window.initNavigation = initNavigation;

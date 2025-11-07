@@ -1,13 +1,10 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db } from './firebase.js';
-import { cleanup } from './dashboard.js';
-
-let firestoreListeners = {};
 
 function renderVisitors() {
     cleanup();
-    setActiveNavItem('renderVisitors()');
+    setActiveNavItem('nav-visitors');
     const isAdmin = userRole === 'admin';
     const appContainer = document.getElementById('app');
 
@@ -27,7 +24,7 @@ function renderVisitors() {
 
             <div class="row mb-4 animate-slide-up">
                 <div class="col-lg-12">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-plus-circle me-2"></i>Registrar Novo Visitante
@@ -62,7 +59,7 @@ function renderVisitors() {
 
             <div class="row animate-slide-up">
                 <div class="col-12">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-list me-2"></i>Visitantes Registrados
@@ -103,6 +100,20 @@ function renderVisitors() {
             addVisitor();
         });
     }
+    initGlobalEventListeners();
+
+    const visitorsList = document.getElementById('visitors-list');
+    visitorsList.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const visitorId = target.dataset.visitorId;
+        if (!visitorId) return;
+
+        if (target.classList.contains('delete-visitor-btn')) {
+            deleteVisitor(visitorId);
+        }
+    });
 
     loadVisitors();
 }
@@ -165,14 +176,14 @@ function loadVisitors() {
                 const visitor = doc.data();
                 html += `
                     <tr class="animate-fade-in">
-                        <td>${visitor.name}</td>
-                        <td><span class="badge-premium badge-info-premium">${visitor.apartment}</span></td>
+                        <td>${sanitizeHTML(visitor.name)}</td>
+                        <td><span class="badge-premium badge-info-premium">${sanitizeHTML(visitor.apartment)}</span></td>
                         <td>${new Date(visitor.date).toLocaleDateString('pt-BR')}</td>
                         ${isAdmin ? `
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-premium btn-danger-premium" 
-                                        onclick="deleteVisitor('${doc.id}')"
+                                <button class="btn btn-premium btn-danger-premium delete-visitor-btn" 
+                                        data-visitor-id="${doc.id}"
                                         title="Excluir visitante">
                                     <i class="fas fa-trash"></i>
                                 </button>

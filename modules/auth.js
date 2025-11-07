@@ -253,19 +253,12 @@ function initPremiumApp() {
             hideLoadingScreen();
         }, 1000);
     });
-
-    // Adicionar suporte a Enter no login
-    document.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && document.getElementById('email') && document.getElementById('password')) {
-            login();
-        }
-    });
 }
 
 function renderLogin() {
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `
-        <div class="login-container">
+        <div class="login-container">            
             <div class="login-card animate-bounce-in">
                 <div class="login-header">
                     <div class="logo-container">
@@ -277,52 +270,54 @@ function renderLogin() {
                         </div>
                     </div>
                 </div>
-                <div class="login-body">
-                    <div class="form-group">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope me-2"></i>Email
-                        </label>
-                        <div class="input-group-premium">
-                            <input type="email" id="email" class="form-control-premium" 
-                                   placeholder="seuemail@exemplo.com" required
-                                   autocomplete="email">
-                            <span class="input-icon">
-                                <i class="fas fa-user"></i>
-                            </span>
+                <div class="login-body">                    
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </label>
+                            <div class="input-group-premium">
+                                <input type="email" id="email" class="form-control-premium" 
+                                       placeholder="seuemail@exemplo.com" required
+                                       autocomplete="email">
+                                <span class="input-icon">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock me-2"></i>Senha
-                        </label>
-                        <div class="input-group-premium">
-                            <input type="password" id="password" class="form-control-premium" 
-                                   placeholder="Sua senha" required
-                                   autocomplete="current-password">
-                            <span class="input-icon">
-                                <i class="fas fa-key"></i>
-                            </span>
+                        
+                        <div class="form-group">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Senha
+                            </label>
+                            <div class="input-group-premium">
+                                <input type="password" id="password" class="form-control-premium" 
+                                       placeholder="Sua senha" required
+                                       autocomplete="current-password">
+                                <span class="input-icon">
+                                    <i class="fas fa-key"></i>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group form-check-premium">
-                        <input type="checkbox" class="form-check-input-premium" id="rememberMe">
-                        <label class="form-check-label" for="rememberMe">
-                            Lembrar-me
-                        </label>
-                    </div>
-                    
-                    <button class="btn btn-login btn-premium btn-primary-premium" onclick="login()">
-                        <i class="fas fa-sign-in-alt me-2"></i>Entrar no Sistema
-                    </button>
-                    
-                    <div class="login-footer text-center mt-4">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i>
-                            Sistema seguro • v2.0.0
-                        </small>
-                    </div>
+                        
+                        <div class="form-group form-check-premium">
+                            <input type="checkbox" class="form-check-input-premium" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                Lembrar-me
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-login btn-premium btn-primary-premium">
+                            <i class="fas fa-sign-in-alt me-2"></i>Entrar no Sistema
+                        </button>
+                        
+                        <div class="login-footer text-center mt-4">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Sistema seguro • v2.0.0
+                            </small>
+                        </div>
+                    </form>
                 </div>
             </div>
             
@@ -334,6 +329,15 @@ function renderLogin() {
             </div>
         </div>
     `;
+
+    // Adicionar listener para o formulário de login
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Previne o recarregamento da página
+            login();
+        });
+    }
 
     // Focar no campo email automaticamente
     setTimeout(() => {

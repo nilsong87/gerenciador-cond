@@ -1,13 +1,10 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db, storage } from './firebase.js';
-import { cleanup } from './dashboard.js';
-
-let firestoreListeners = {};
 
 function renderLostAndFound() {
     cleanup();
-    setActiveNavItem('renderLostAndFound()');
+    setActiveNavItem('nav-lost-found');
     const appContainer = document.getElementById('app');
 
     appContainer.innerHTML = `
@@ -27,10 +24,17 @@ function renderLostAndFound() {
                 </div>
             </div>
 
-            <div id="lost-and-found-list" class="row">
-                <div class="col-12 text-center py-5">
-                    <div class="loading"></div>
-                    <p class="text-muted mt-2">Carregando itens...</p>
+            <div class="card-premium animate-slide-up">
+                <div class="card-header-premium">
+                    <h5 class="card-title mb-0"><i class="fas fa-list-alt me-2"></i>Itens Registrados</h5>
+                </div>
+                <div class="card-body-premium">
+                    <div id="lost-and-found-list" class="row">
+                        <div class="col-12 text-center py-5">
+                            <div class="loading"></div>
+                            <p class="text-muted mt-2">Carregando itens...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,6 +78,7 @@ function renderLostAndFound() {
         });
     }
 
+    initGlobalEventListeners();
     loadLostAndFound();
 }
 

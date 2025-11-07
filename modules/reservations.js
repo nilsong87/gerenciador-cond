@@ -1,9 +1,7 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db } from './firebase.js';
-import { cleanup } from './dashboard.js';
 
-let firestoreListeners = {};
 let calendar;
 
 function renderReservations() {
@@ -26,7 +24,7 @@ function renderReservations() {
             
             <div class="row mb-4">
                 <div class="col-lg-8">
-                    <div class="card-premium animate-slide-up">
+                    <div class="card-premium animate-slide-up h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-plus-circle me-2"></i>Nova Reserva
@@ -73,10 +71,10 @@ function renderReservations() {
                                 <div class="mb-3">
                                     <label for="reservation-notes" class="form-label">Observações</label>
                                     <textarea class="form-control-premium" id="reservation-notes" rows="3" 
-                                              placeholder="Informações adicionais sobre o evento..."></textarea>
+                                              placeholder="Informações adicionais..."></textarea>
                                 </div>
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="button" class="btn btn-premium btn-secondary-premium" onclick="clearReservationForm()">
+                                    <button type="button" class="btn btn-premium btn-secondary-premium" id="clear-reservation-form-btn">
                                         <i class="fas fa-times me-2"></i>Limpar
                                     </button>
                                     <button type="submit" class="btn btn-premium btn-primary-premium">
@@ -88,7 +86,7 @@ function renderReservations() {
                     </div>
                 </div>
                 <div class="col-lg-4">
-                    <div class="card-premium animate-slide-up">
+                    <div class="card-premium animate-slide-up h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-info-circle me-2"></i>Informações
@@ -105,6 +103,8 @@ function renderReservations() {
                                     <li>Churrasqueira: 20 pessoas</li>
                                     <li>Quadra: 30 pessoas</li>
                                     <li>Piscina: 25 pessoas</li>
+                                    <li>Salão de Jogos: 15 pessoas</li>
+                                    <li>Espaço Gourmet: 10 pessoas</li>
                                 </ul>
                             </div>
                         </div>
@@ -120,13 +120,13 @@ function renderReservations() {
                                 <i class="fas fa-list me-2"></i>Minhas Reservas
                             </h5>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-premium btn-outline-primary active" onclick="filterReservations('all')">
+                                <button class="btn btn-sm btn-premium btn-outline-primary active" id="filter-reservations-all-btn">
                                     Todas
                                 </button>
-                                <button class="btn btn-sm btn-premium btn-outline-success" onclick="filterReservations('upcoming')">
+                                <button class="btn btn-sm btn-premium btn-outline-success" id="filter-reservations-upcoming-btn">
                                     Futuras
                                 </button>
-                                <button class="btn btn-sm btn-premium btn-outline-secondary" onclick="filterReservations('past')">
+                                <button class="btn btn-sm btn-premium btn-outline-secondary" id="filter-reservations-past-btn">
                                     Passadas
                                 </button>
                             </div>
@@ -175,11 +175,30 @@ function renderReservations() {
         </div>
     `;
 
-    setActiveNavItem('renderReservations()');
+    setActiveNavItem('nav-reservations');
+    initGlobalEventListeners();
 
     document.getElementById('reservation-form').addEventListener('submit', function(e) {
         e.preventDefault();
         addReservation();
+    });
+
+    document.getElementById('clear-reservation-form-btn').addEventListener('click', clearReservationForm);
+    document.getElementById('filter-reservations-all-btn').addEventListener('click', () => filterReservations('all'));
+    document.getElementById('filter-reservations-upcoming-btn').addEventListener('click', () => filterReservations('upcoming'));
+    document.getElementById('filter-reservations-past-btn').addEventListener('click', () => filterReservations('past'));
+
+    const reservationsList = document.getElementById('reservations-list');
+    reservationsList.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const reservationId = target.dataset.reservationId;
+        if (!reservationId) return;
+
+        if (target.classList.contains('delete-reservation-btn')) {
+            deleteReservation(reservationId);
+        }
     });
 
     loadEnhancedReservations();
@@ -223,15 +242,15 @@ function loadEnhancedReservations(filter = 'all') {
 
                 html += `
                     <tr class="animate-fade-in">
-                        <td>${reservation.area}</td>
+                        <td>${sanitizeHTML(reservation.area)}</td>
                         <td>${date.toLocaleDateString('pt-BR')}</td>
-                        <td>${reservation.time}</td>
-                        <td>${reservation.guests || '-'}</td>
+                        <td>${sanitizeHTML(reservation.time)}</td>
+                        <td>${sanitizeHTML(reservation.guests) || '-'}</td>
                         <td><span class="badge-premium ${status === 'Futura' ? 'badge-success-premium' : 'badge-secondary-premium'}">${status}</span></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-premium btn-danger-premium" 
-                                        onclick="deleteReservation('${doc.id}')"
+                                <button class="btn btn-premium btn-danger-premium delete-reservation-btn" 
+                                        data-reservation-id="${doc.id}"
                                         title="Excluir reserva">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -322,7 +341,7 @@ function showReservationCalendar() {
                 const data = doc.data();
                 const [startHour, endHour] = data.time.split('-').map(t => t.split(':')[0]);
                 return {
-                    title: `${data.area} (${data.user.split('@')[0]})`,
+                    title: `${sanitizeHTML(data.area)} (${sanitizeHTML(data.user.split('@')[0])})`,
                     start: `${data.date}T${startHour}:00:00`,
                     end: `${data.date}T${endHour}:00:00`,
                     allDay: false,
@@ -354,11 +373,11 @@ function showReservationCalendar() {
                     const event = info.event;
                     const props = event.extendedProps;
                     const content = `
-                        <p><strong>Área:</strong> ${props.area}</p>
+                        <p><strong>Área:</strong> ${sanitizeHTML(props.area)}</p>
                         <p><strong>Data:</strong> ${new Date(props.date).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Horário:</strong> ${props.time}</p>
-                        <p><strong>Reservado por:</strong> ${props.user}</p>
-                        ${props.notes ? `<p><strong>Observações:</strong> ${props.notes}</p>` : ''}
+                        <p><strong>Horário:</strong> ${sanitizeHTML(props.time)}</p>
+                        <p><strong>Reservado por:</strong> ${sanitizeHTML(props.user)}</p>
+                        ${props.notes ? `<p><strong>Observações:</strong> ${sanitizeHTML(props.notes)}</p>` : ''}
                     `;
                     showAlert(content, 'info', 10000);
                 }
@@ -370,7 +389,7 @@ function showReservationCalendar() {
 
 function filterReservations(filter) {
     document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.btn-group .btn[onclick="filterReservations('${filter}')"]`).classList.add('active');
+    document.getElementById(`filter-reservations-${filter}-btn`).classList.add('active');
     loadEnhancedReservations(filter);
 }
 

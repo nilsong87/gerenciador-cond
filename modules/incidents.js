@@ -1,13 +1,10 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db, storage } from './firebase.js';
-import { cleanup } from './dashboard.js';
-
-let firestoreListeners = {};
 
 function renderIncidents() {
     cleanup();
-    setActiveNavItem('renderIncidents()');
+    setActiveNavItem('nav-incidents');
     const isAdmin = userRole === 'admin';
     const appContainer = document.getElementById('app');
 
@@ -27,7 +24,7 @@ function renderIncidents() {
 
             <div class="row mb-4 animate-slide-up">
                 <div class="col-lg-12">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-plus-circle me-2"></i>Nova Ocorrência
@@ -71,7 +68,7 @@ function renderIncidents() {
 
             <div class="row animate-slide-up">
                 <div class="col-12">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-list me-2"></i>Minhas Ocorrências
@@ -113,6 +110,24 @@ function renderIncidents() {
             addIncident();
         });
     }
+    initGlobalEventListeners();
+
+    const incidentsList = document.getElementById('incidents-list');
+    incidentsList.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const incidentId = target.dataset.incidentId;
+        if (!incidentId) return;
+
+        if (target.classList.contains('update-status-in-progress-btn')) {
+            updateIncidentStatus(incidentId, 'in_progress');
+        } else if (target.classList.contains('update-status-resolved-btn')) {
+            updateIncidentStatus(incidentId, 'resolved');
+        } else if (target.classList.contains('delete-incident-btn')) {
+            deleteIncident(incidentId);
+        }
+    });
 
     loadIncidents();
 }
@@ -197,25 +212,25 @@ function loadIncidents() {
                 const incident = doc.data();
                 html += `
                     <tr class="animate-fade-in">
-                        <td>${incident.title}</td>
-                        <td>${incident.type}</td>
+                        <td>${sanitizeHTML(incident.title)}</td>
+                        <td>${sanitizeHTML(incident.type)}</td>
                         <td><span class="badge-premium ${getIncidentStatusClass(incident.status)}">${incident.status}</span></td>
                         <td>${incident.timestamp.toDate().toLocaleDateString('pt-BR')}</td>
                         ${isAdmin ? `
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-premium btn-success-premium" 
-                                        onclick="updateIncidentStatus('${doc.id}', 'in_progress')"
+                                <button class="btn btn-premium btn-success-premium update-status-in-progress-btn" 
+                                        data-incident-id="${doc.id}"
                                         title="Marcar como em andamento">
                                     <i class="fas fa-play"></i>
                                 </button>
-                                <button class="btn btn-premium btn-primary-premium" 
-                                        onclick="updateIncidentStatus('${doc.id}', 'resolved')"
+                                <button class="btn btn-premium btn-primary-premium update-status-resolved-btn" 
+                                        data-incident-id="${doc.id}"
                                         title="Marcar como resolvido">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button class="btn btn-premium btn-danger-premium" 
-                                        onclick="deleteIncident('${doc.id}')"
+                                <button class="btn btn-premium btn-danger-premium delete-incident-btn" 
+                                        data-incident-id="${doc.id}"
                                         title="Excluir ocorrência">
                                     <i class="fas fa-trash"></i>
                                 </button>

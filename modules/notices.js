@@ -1,13 +1,10 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole } from './auth.js';
 import { db } from './firebase.js';
-import { cleanup } from './dashboard.js';
-
-let firestoreListeners = {};
 
 function renderNotices() {
     cleanup();
-    setActiveNavItem('renderNotices()');
+    setActiveNavItem('nav-notices');
     const isAdmin = userRole === 'admin';
     const appContainer = document.getElementById('app');
 
@@ -30,10 +27,17 @@ function renderNotices() {
                 </div>
             </div>
 
-            <div id="notices-list" class="row">
-                <div class="col-12 text-center py-5">
-                    <div class="loading"></div>
-                    <p class="text-muted mt-2">Carregando avisos...</p>
+            <div class="card-premium animate-slide-up">
+                <div class="card-header-premium">
+                    <h5 class="card-title mb-0"><i class="fas fa-list-alt me-2"></i>Avisos Publicados</h5>
+                </div>
+                <div class="card-body-premium">
+                    <div id="notices-list" class="row">
+                        <div class="col-12 text-center py-5">
+                            <div class="loading"></div>
+                            <p class="text-muted mt-2">Carregando avisos...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,6 +81,7 @@ function renderNotices() {
         }
     }
 
+    initGlobalEventListeners();
     loadNotices();
 }
 
@@ -131,8 +136,8 @@ function loadNotices() {
                     <div class="col-md-6 col-lg-4 mb-4">
                         <div class="card-premium h-100">
                             <div class="card-body-premium">
-                                <h5 class="card-title">${notice.title}</h5>
-                                <p class="card-text">${notice.content}</p>
+                                <h5 class="card-title">${sanitizeHTML(notice.title)}</h5>
+                                <p class="card-text">${sanitizeHTML(notice.content)}</p>
                             </div>
                             <div class="card-footer-premium">
                                 <small class="text-muted">Publicado em ${notice.timestamp.toDate().toLocaleDateString('pt-BR')}</small>

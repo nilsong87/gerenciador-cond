@@ -1,9 +1,6 @@
-import { renderNavigation, setActiveNavItem, showAlert } from './ui.js';
+import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db } from './firebase.js';
-import { cleanup } from './dashboard.js';
-
-let firestoreListeners = {};
 
 function renderPackages() {
     cleanup();
@@ -19,7 +16,7 @@ function renderPackages() {
                         <h1 class="h3 mb-0 text-gradient">
                             <i class="fas fa-box me-2"></i>Gerenciar Encomendas
                         </h1>
-                        <button class="btn btn-premium btn-primary-premium" onclick="exportPackagesData()">
+                        <button id="export-packages-btn" class="btn btn-premium btn-primary-premium">
                             <i class="fas fa-download me-2"></i>Exportar
                         </button>
                     </div>
@@ -30,7 +27,7 @@ function renderPackages() {
             ${isAdmin ? `
             <div class="row mb-4 animate-slide-up">
                 <div class="col-lg-6">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-plus-circle me-2"></i>Nova Encomenda
@@ -61,7 +58,7 @@ function renderPackages() {
                                               placeholder="Informações adicionais..."></textarea>
                                 </div>
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="button" class="btn btn-premium btn-secondary-premium" onclick="clearPackageForm()">
+                                    <button id="clear-package-form-btn" type="button" class="btn btn-premium btn-secondary-premium">
                                         <i class="fas fa-times me-2"></i>Limpar
                                     </button>
                                     <button type="submit" class="btn btn-premium btn-primary-premium">
@@ -73,7 +70,7 @@ function renderPackages() {
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="card-premium">
+                    <div class="card-premium h-100">
                         <div class="card-header-premium">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-chart-pie me-2"></i>Estatísticas
@@ -104,10 +101,10 @@ function renderPackages() {
                                 <i class="fas fa-list me-2"></i>Encomendas Pendentes
                             </h5>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-premium btn-outline-primary" onclick="filterPackages('all')">
+                                <button id="filter-packages-all-btn" class="btn btn-sm btn-premium btn-outline-primary">
                                     Todas
                                 </button>
-                                <button class="btn btn-sm btn-premium btn-outline-success" onclick="filterPackages('today')">
+                                <button id="filter-packages-today-btn" class="btn btn-sm btn-premium btn-outline-success">
                                     Hoje
                                 </button>
                             </div>
@@ -142,7 +139,12 @@ function renderPackages() {
         </div>
     `;
 
-    setActiveNavItem('renderPackages()');
+    setActiveNavItem('nav-packages');
+    initGlobalEventListeners();
+
+    document.getElementById('export-packages-btn').addEventListener('click', exportPackagesData);
+    document.getElementById('filter-packages-all-btn').addEventListener('click', () => filterPackages('all'));
+    document.getElementById('filter-packages-today-btn').addEventListener('click', () => filterPackages('today'));
 
     const form = document.getElementById('package-form');
     if (form) {
@@ -150,7 +152,23 @@ function renderPackages() {
             e.preventDefault();
             addPackage();
         });
+        document.getElementById('clear-package-form-btn').addEventListener('click', clearPackageForm);
     }
+
+    const packagesList = document.getElementById('packages-list');
+    packagesList.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const packageId = target.dataset.packageId;
+        if (!packageId) return;
+
+        if (target.classList.contains('deliver-package-btn')) {
+            deliverPackage(packageId);
+        } else if (target.classList.contains('delete-package-btn')) {
+            deletePackage(packageId);
+        }
+    });
 
     loadEnhancedPackages();
     if (isAdmin) {
@@ -199,15 +217,15 @@ function loadEnhancedPackages() {
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-box text-primary me-3"></i>
                                 <div>
-                                    <strong>${packageData.description}</strong>
-                                    ${packageData.notes ? `<br><small class="text-muted">${packageData.notes}</small>` : ''}
+                                    <strong>${sanitizeHTML(packageData.description)}</strong>
+                                    ${packageData.notes ? `<br><small class="text-muted">${sanitizeHTML(packageData.notes)}</small>` : ''}
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge-premium badge-info-premium">${packageData.apartment}</span>
+                            <span class="badge-premium badge-info-premium">${sanitizeHTML(packageData.apartment)}</span>
                         </td>
-                        <td>${packageData.recipient || '<span class="text-muted">-</span>'}</td>
+                        <td>${sanitizeHTML(packageData.recipient) || '<span class="text-muted">-</span>'}</td>
                         <td>
                             <div>${date?.toLocaleDateString('pt-BR') || 'N/A'}</div>
                             <small class="text-muted">${date?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || ''}</small>
@@ -220,13 +238,13 @@ function loadEnhancedPackages() {
                         ${isAdmin ? `
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-premium btn-success-premium" 
-                                        onclick="deliverPackage('${doc.id}')"
+                                <button class="btn btn-premium btn-success-premium deliver-package-btn" 
+                                        data-package-id="${doc.id}"
                                         title="Marcar como entregue">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button class="btn btn-premium btn-danger-premium" 
-                                        onclick="deletePackage('${doc.id}')"
+                                <button class="btn btn-premium btn-danger-premium delete-package-btn" 
+                                        data-package-id="${doc.id}"
                                         title="Excluir encomenda">
                                     <i class="fas fa-trash"></i>
                                 </button>
