@@ -8,6 +8,11 @@ import { renderAdmin, generateSystemReport, showSystemSettings } from './admin.j
 import { initAppEventListeners } from '../app.js';
 
 function renderDashboard() {
+    const recaptchaBadge = document.querySelector('.g-recaptcha');
+    if (recaptchaBadge) {
+        recaptchaBadge.style.display = 'none';
+    }
+
     cleanup();
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `

@@ -8,91 +8,95 @@ let currentUser = null;
 let userRole = null;
 
 async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const loginBtn = document.querySelector('.btn-login');
+    grecaptcha.ready(function() {
+        grecaptcha.execute('6LfmCgUsAAAAAKXcF_eZAefnQRPWwy2iBYqyudk6', {action: 'login'}).then(async function(token) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.querySelector('.btn-login');
 
-    if (!email || !password) {
-        showAlert('Por favor, preencha todos os campos', 'warning');
-        return;
-    }
+            if (!email || !password) {
+                showAlert('Por favor, preencha todos os campos', 'warning');
+                return;
+            }
 
-    // Animação de loading no botão
-    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Entrando...';
-    loginBtn.disabled = true;
-    loginBtn.style.opacity = '0.8';
-    loginBtn.style.transform = 'scale(0.98)';
+            // Animação de loading no botão
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Entrando...';
+            loginBtn.disabled = true;
+            loginBtn.style.opacity = '0.8';
+            loginBtn.style.transform = 'scale(0.98)';
 
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        currentUser = userCredential.user;
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUser = userCredential.user;
 
-        // Verificar se usuário existe no Firestore
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        if (userDoc.exists) {
-            userRole = userDoc.data().role;
-            
-            // Atualizar último login
-            await db.collection('users').doc(currentUser.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                // Verificar se usuário existe no Firestore
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (userDoc.exists) {
+                    userRole = userDoc.data().role;
+                    
+                    // Atualizar último login
+                    await db.collection('users').doc(currentUser.uid).update({
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
-            showLoadingScreen();
-            
-            // Simular carregamento premium
-            setTimeout(() => {
-                renderDashboard();
-                hideLoadingScreen();
-                showAlert(`Bem-vindo de volta, ${currentUser.email.split('@')[0]}!`, 'success');
-            }, 1500);
-        } else {
-            throw new Error('Usuário não encontrado no sistema');
-        }
-    } catch (error) {
-        console.error('Erro de login:', error);
-        
-        // Reset do botão com animação
-        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Entrar';
-        loginBtn.disabled = false;
-        loginBtn.style.opacity = '1';
-        loginBtn.style.transform = 'scale(1)';
-        
-        // Mensagens de erro específicas
-        let errorMessage = 'Erro ao fazer login';
-        switch (error.code) {
-            case 'auth/invalid-email':
-                errorMessage = 'Email inválido. Verifique o formato.';
-                break;
-            case 'auth/user-disabled':
-                errorMessage = 'Esta conta foi desativada.';
-                break;
-            case 'auth/user-not-found':
-                errorMessage = 'Usuário não encontrado.';
-                break;
-            case 'auth/wrong-password':
-                errorMessage = 'Senha incorreta. Tente novamente.';
-                break;
-            case 'auth/too-many-requests':
-                errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Erro de conexão. Verifique sua internet.';
-                break;
-            default:
-                errorMessage = error.message || 'Erro desconhecido';
-        }
-        
-        showAlert(errorMessage, 'danger');
-        
-        // Adicionar efeito de shake no formulário em caso de erro
-        const loginCard = document.querySelector('.login-card');
-        if (loginCard) {
-            loginCard.style.animation = 'shake 0.5s ease-in-out';
-            setTimeout(() => {
-                loginCard.style.animation = '';
-            }, 500);
-        }
-    }
+                    showLoadingScreen();
+                    
+                    // Simular carregamento premium
+                    setTimeout(() => {
+                        renderDashboard();
+                        hideLoadingScreen();
+                        showAlert(`Bem-vindo de volta, ${currentUser.email.split('@')[0]}!`, 'success');
+                    }, 1500);
+                } else {
+                    throw new Error('Usuário não encontrado no sistema');
+                }
+            } catch (error) {
+                console.error('Erro de login:', error);
+                
+                // Reset do botão com animação
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Entrar';
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = '1';
+                loginBtn.style.transform = 'scale(1)';
+                
+                // Mensagens de erro específicas
+                let errorMessage = 'Erro ao fazer login';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'Email inválido. Verifique o formato.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'Esta conta foi desativada.';
+                        break;
+                    case 'auth/user-not-found':
+                        errorMessage = 'Usuário não encontrado.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Senha incorreta. Tente novamente.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Erro de conexão. Verifique sua internet.';
+                        break;
+                    default:
+                        errorMessage = error.message || 'Erro desconhecido';
+                }
+                
+                showAlert(errorMessage, 'danger');
+                
+                // Adicionar efeito de shake no formulário em caso de erro
+                const loginCard = document.querySelector('.login-card');
+                if (loginCard) {
+                    loginCard.style.animation = 'shake 0.5s ease-in-out';
+                    setTimeout(() => {
+                        loginCard.style.animation = '';
+                    }, 500);
+                }
+            }
+        });
+    });
 }
 
 async function logout() {
@@ -121,6 +125,10 @@ async function logout() {
                 currentUser = null;
                 userRole = null;
                 renderLogin();
+                const recaptchaBadge = document.querySelector('.g-recaptcha');
+                if (recaptchaBadge) {
+                    recaptchaBadge.style.display = 'block';
+                }
                 showAlert('Logout realizado com sucesso!', 'success');
             } catch (error) {
                 console.error('Erro no logout:', error);
@@ -317,6 +325,7 @@ function renderLogin() {
                                 <i class="fas fa-shield-alt me-1"></i>
                                 Sistema seguro • v2.0.0
                             </small>
+                            <div class="g-recaptcha" data-sitekey="6LfmCgUsAAAAAKXcF_eZAefnQRPWwy2iBYqyudk6" data-size="invisible" data-badge="bottomleft"></div>
                         </div>
                     </form>
                 </div>
