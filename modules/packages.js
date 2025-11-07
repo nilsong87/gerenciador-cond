@@ -1,6 +1,7 @@
 import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db } from './firebase.js';
+import { initAppEventListeners } from '../app.js';
 
 function renderPackages() {
     cleanup();
@@ -8,7 +9,7 @@ function renderPackages() {
     
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `
-        ${renderNavigation()}
+        ${renderNavigation(userRole, currentUser)}
         <div class="container-fluid py-4 animate-fade-in">
             <div class="row mb-4">
                 <div class="col-12">
@@ -141,6 +142,7 @@ function renderPackages() {
 
     setActiveNavItem('nav-packages');
     initGlobalEventListeners();
+    initAppEventListeners();
 
     document.getElementById('export-packages-btn').addEventListener('click', exportPackagesData);
     document.getElementById('filter-packages-all-btn').addEventListener('click', () => filterPackages('all'));

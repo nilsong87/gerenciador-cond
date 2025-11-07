@@ -1,0 +1,74 @@
+  createdAt: timestamp,
+  lastLogin: timestamp,
+  status: "active" | "inactive"
+}
+packages/
+
+text
+{
+  description: string,
+  apartment: string,
+  recipient: string,
+  notes: string,
+  delivered: boolean,
+  timestamp: timestamp,
+  registeredBy: string,
+  deliveredAt: timestamp,
+  deliveredBy: string
+}
+reservations/
+
+text
+{
+  area: string,
+  date: string (YYYY-MM-DD),
+  time: string,
+  guests: number,
+  notes: string,
+  user: string,
+  timestamp: timestamp,
+  status: "confirmed" | "pending" | "cancelled"
+}
+visitors/
+
+text
+{
+  name: string,
+  apartment: string,
+  date: string,
+  registeredBy: string,
+  timestamp: timestamp
+}
+incidents/
+
+text
+{
+  title: string,
+  type: string,
+  description: string,
+  status: "open" | "in_progress" | "resolved",
+  reportedBy: string,
+  timestamp: timestamp,
+  imageUrl: string (optional)
+}
+notices/
+
+text
+{
+  title: string,
+  content: string,
+  timestamp: timestamp,
+  author: string,
+  priority: "low" | "medium" | "high"
+}
+lostAndFound/
+
+text
+{
+  description: string,
+  location: string,
+  reportedBy: string,
+  timestamp: timestamp,
+  imageUrl: string (optional),
+  status: "lost" | "found" | "claimed"
+}

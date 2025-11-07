@@ -1,6 +1,7 @@
 import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db } from './firebase.js';
+import { initAppEventListeners } from '../app.js';
 
 let calendar;
 
@@ -8,7 +9,7 @@ function renderReservations() {
     cleanup();
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `
-        ${renderNavigation()}
+        ${renderNavigation(userRole, currentUser)}
         <div class="container-fluid py-4 animate-fade-in">
             <div class="row mb-4">
                 <div class="col-12">
@@ -177,6 +178,7 @@ function renderReservations() {
 
     setActiveNavItem('nav-reservations');
     initGlobalEventListeners();
+    initAppEventListeners();
 
     document.getElementById('reservation-form').addEventListener('submit', function(e) {
         e.preventDefault();

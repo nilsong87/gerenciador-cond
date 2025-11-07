@@ -5,12 +5,13 @@ import { renderPackages } from './packages.js';
 import { renderNotices } from './notices.js';
 import { renderIncidents } from './incidents.js';
 import { renderAdmin, generateSystemReport, showSystemSettings } from './admin.js';
+import { initAppEventListeners } from '../app.js';
 
 function renderDashboard() {
     cleanup();
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `
-        ${renderNavigation()}
+        ${renderNavigation(userRole, currentUser)}
         <div class="container-fluid py-4 animate-fade-in">
             <!-- Header de Boas-Vindas -->
             <div class="row mb-4">
@@ -129,6 +130,7 @@ function renderDashboard() {
     setActiveNavItem('renderDashboard()');
     loadEnhancedDashboardData();
     initGlobalEventListeners();
+    initAppEventListeners();
 
     if (userRole === 'admin') {
         document.getElementById('quick-action-packages').addEventListener('click', (e) => { e.preventDefault(); renderPackages(); });

@@ -1,10 +1,11 @@
 import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners } from './ui.js';
-import { userRole } from './auth.js';
+import { userRole, currentUser } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { db } from './firebase.js';
 import { cleanup } from './dashboard.js';
 import { renderNotices } from './notices.js';
 import { renderIncidents } from './incidents.js';
+import { initAppEventListeners } from '../app.js';
 
 function renderAdmin() {
     cleanup();
@@ -17,7 +18,7 @@ function renderAdmin() {
     
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = `
-        ${renderNavigation()}
+        ${renderNavigation(userRole, currentUser)}
         <div class="container-fluid py-4 animate-fade-in">
             <div class="row mb-4">
                 <div class="col-12">
@@ -190,6 +191,7 @@ function renderAdmin() {
     setActiveNavItem('renderAdmin()');
     loadEnhancedAdminData();
     initGlobalEventListeners();
+    initAppEventListeners();
 
     document.getElementById('generate-report-btn').addEventListener('click', generateSystemReport);
     document.getElementById('system-settings-btn').addEventListener('click', showSystemSettings);

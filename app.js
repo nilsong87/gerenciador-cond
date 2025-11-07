@@ -17,16 +17,47 @@ document.addEventListener('DOMContentLoaded', function() {
     initPremiumApp();
 });
 
-function initAppEventListeners() {
+export function initAppEventListeners() {
     // Navigation links
-    document.getElementById('nav-logo').addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); setActiveNavItem('nav-dashboard'); });
-    document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); setActiveNavItem('nav-dashboard'); });
-    document.getElementById('nav-packages').addEventListener('click', (e) => { e.preventDefault(); renderPackages(); setActiveNavItem('nav-packages'); });
-    document.getElementById('nav-reservations').addEventListener('click', (e) => { e.preventDefault(); renderReservations(); setActiveNavItem('nav-reservations'); });
-    document.getElementById('nav-visitors').addEventListener('click', (e) => { e.preventDefault(); renderVisitors(); setActiveNavItem('nav-visitors'); });
-    document.getElementById('nav-incidents').addEventListener('click', (e) => { e.preventDefault(); renderIncidents(); setActiveNavItem('nav-incidents'); });
-    document.getElementById('nav-notices').addEventListener('click', (e) => { e.preventDefault(); renderNotices(); setActiveNavItem('nav-notices'); });
-    document.getElementById('nav-lost-found').addEventListener('click', (e) => { e.preventDefault(); renderLostAndFound(); setActiveNavItem('nav-lost-found'); });
+    const navLogo = document.getElementById('nav-logo');
+    if (navLogo) {
+        navLogo.addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); setActiveNavItem('nav-dashboard'); });
+    }
+
+    const navDashboard = document.getElementById('nav-dashboard');
+    if (navDashboard) {
+        navDashboard.addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); setActiveNavItem('nav-dashboard'); });
+    }
+
+    const navPackages = document.getElementById('nav-packages');
+    if (navPackages) {
+        navPackages.addEventListener('click', (e) => { e.preventDefault(); renderPackages(); setActiveNavItem('nav-packages'); });
+    }
+
+    const navReservations = document.getElementById('nav-reservations');
+    if (navReservations) {
+        navReservations.addEventListener('click', (e) => { e.preventDefault(); renderReservations(); setActiveNavItem('nav-reservations'); });
+    }
+
+    const navVisitors = document.getElementById('nav-visitors');
+    if (navVisitors) {
+        navVisitors.addEventListener('click', (e) => { e.preventDefault(); renderVisitors(); setActiveNavItem('nav-visitors'); });
+    }
+
+    const navIncidents = document.getElementById('nav-incidents');
+    if (navIncidents) {
+        navIncidents.addEventListener('click', (e) => { e.preventDefault(); renderIncidents(); setActiveNavItem('nav-incidents'); });
+    }
+
+    const navNotices = document.getElementById('nav-notices');
+    if (navNotices) {
+        navNotices.addEventListener('click', (e) => { e.preventDefault(); renderNotices(); setActiveNavItem('nav-notices'); });
+    }
+
+    const navLostFound = document.getElementById('nav-lost-found');
+    if (navLostFound) {
+        navLostFound.addEventListener('click', (e) => { e.preventDefault(); renderLostAndFound(); setActiveNavItem('nav-lost-found'); });
+    }
     
     const navAdmin = document.getElementById('nav-admin');
     if (navAdmin) {
@@ -34,10 +65,25 @@ function initAppEventListeners() {
     }
 
     // User dropdown
-    document.getElementById('nav-notifications').addEventListener('click', (e) => { e.preventDefault(); markNoticesAsRead(); renderNotices(); });
-    document.getElementById('nav-user-profile').addEventListener('click', (e) => { e.preventDefault(); showUserProfile(); });
-    document.getElementById('nav-settings').addEventListener('click', (e) => { e.preventDefault(); showSettings(); });
-    document.getElementById('nav-logout').addEventListener('click', (e) => { e.preventDefault(); logout(); });
+    const navNotifications = document.getElementById('nav-notifications');
+    if (navNotifications) {
+        navNotifications.addEventListener('click', (e) => { e.preventDefault(); markNoticesAsRead(); renderNotices(); });
+    }
+
+    const navUserProfile = document.getElementById('nav-user-profile');
+    if (navUserProfile) {
+        navUserProfile.addEventListener('click', (e) => { e.preventDefault(); showUserProfile(); });
+    }
+
+    const navSettings = document.getElementById('nav-settings');
+    if (navSettings) {
+        navSettings.addEventListener('click', (e) => { e.preventDefault(); showSettings(); });
+    }
+
+    const navLogout = document.getElementById('nav-logout');
+    if (navLogout) {
+        navLogout.addEventListener('click', (e) => { e.preventDefault(); logout(); });
+    }
 }
 
 // No more global exposure of functions

@@ -1,6 +1,7 @@
 import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners, cleanup, firestoreListeners, sanitizeHTML } from './ui.js';
 import { userRole, currentUser } from './auth.js';
 import { db, storage } from './firebase.js';
+import { initAppEventListeners } from '../app.js';
 
 function renderIncidents() {
     cleanup();
@@ -9,7 +10,7 @@ function renderIncidents() {
     const appContainer = document.getElementById('app');
 
     appContainer.innerHTML = `
-        ${renderNavigation()}
+        ${renderNavigation(userRole, currentUser)}
         <div class="container-fluid py-4 animate-fade-in">
             <div class="row mb-4">
                 <div class="col-12">
@@ -111,6 +112,7 @@ function renderIncidents() {
         });
     }
     initGlobalEventListeners();
+    initAppEventListeners();
 
     const incidentsList = document.getElementById('incidents-list');
     incidentsList.addEventListener('click', (e) => {

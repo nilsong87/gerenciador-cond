@@ -1,6 +1,7 @@
 import { renderDashboard } from './dashboard.js';
-import { showAlert, showLoadingScreen, hideLoadingScreen, renderNavigation } from './ui.js';
+import { showAlert, showLoadingScreen, hideLoadingScreen } from './ui.js';
 import { db } from './firebase.js';
+import { initAppEventListeners } from '../app.js';
 
 const auth = firebase.auth();
 let currentUser = null;
