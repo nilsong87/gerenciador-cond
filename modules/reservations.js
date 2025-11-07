@@ -161,14 +161,14 @@ function renderReservations() {
             </div>
         </div>
 
-        <div class="modal fade calendar-modal-premium" id="calendar-modal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
+        <div class="modal-premium fade" id="calendar-modal" tabindex="-1">
+            <div class="modal-dialog-premium modal-xl modal-dialog-centered">
+                <div class="modal-content-premium">
+                    <div class="modal-header-premium">
                         <h5 class="modal-title">Calendário de Reservas</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close-premium" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body-premium">
                         <div id="calendar"></div>
                     </div>
                 </div>

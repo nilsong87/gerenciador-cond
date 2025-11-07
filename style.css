@@ -305,6 +305,7 @@ body {
 
 .modal-dialog-premium {
     position: relative;
+    z-index: 10;
     margin: 50px auto;
     max-width: 500px;
     padding: 20px;
