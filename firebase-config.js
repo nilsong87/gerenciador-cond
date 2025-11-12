@@ -1,12 +1,12 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBLA2bniJbAydLGjG4bxcf3QhwgwoEyNiE",
-  authDomain: "gerenciamento-cond.firebaseapp.com",
-  projectId: "gerenciamento-cond",
-  storageBucket: "gerenciamento-cond.firebasestorage.app",
-  messagingSenderId: "830534759941",
-  appId: "1:830534759941:web:624a49abc9ab29f05dce6c",
-  measurementId: "G-KWY107ZY9M"
+  apiKey: "YOUR_API_KEY", // Use variáveis de ambiente em produção
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 // Initialize Firebase
