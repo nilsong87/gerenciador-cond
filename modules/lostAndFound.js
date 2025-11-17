@@ -102,7 +102,7 @@ function addItem() {
     };
 
     if (imageFile) {
-        const storageRef = storage.ref(`lostAndFound/${Date.now()}_${imageFile.name}`);
+        const storageRef = storage.ref(`lostAndFound/${currentUser.uid}/${Date.now()}_${imageFile.name}`);
         storageRef.put(imageFile).then(snapshot => {
             snapshot.ref.getDownloadURL().then(downloadURL => {
                 item.imageUrl = downloadURL;

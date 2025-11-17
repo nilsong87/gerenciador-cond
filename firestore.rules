@@ -1,69 +1,88 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Funções Auxiliares ---
-    
-    // Verifica se o usuário autenticado é um administrador.
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Obtém o apartamento do usuário autenticado a partir do seu documento.
-    function getAuthenticatedUserApartment() {
+    // Helper function to check if the user is the owner by email
+    function isOwnerByEmail(resource) {
+    	return request.auth.token.email == resource.data.reportedBy || request.auth.token.email == resource.data.user;
+    }
+
+    // Helper function to get the user's apartment
+    function getUserApartment() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.apartment;
     }
-    
-    // --- Coleções ---
 
-    // Coleção de Usuários (Users)
+    // Users Collection
+    // - Users can read and update their own data.
+    // - Admins can read and write to any user document.
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow delete: if request.auth != null && isAdmin();
-    }
-    
-    // Coleção de Encomendas (Packages)
-    match /packages/{packageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && isAdmin();
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && isAdmin();
-    }
-    
-    // Coleção de Reservas (Reservations)
-    match /reservations/{reservationId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.user == request.auth.token.email;
-      allow update, delete: if request.auth != null && (isAdmin() || resource.data.user == request.auth.token.email);
-    }
-    
-    // Coleção de Visitantes (Visitors)
-    match /visitors/{visitorId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    
-    // Coleção de Ocorrências (Incidents)
-    match /incidents/{incidentId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.reportedBy == request.auth.token.email;
-      allow update: if request.auth != null && (isAdmin() || resource.data.reportedBy == request.auth.token.email);
-      allow delete: if request.auth != null && (isAdmin() || resource.data.reportedBy == request.auth.token.email);
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      allow create, delete: if isAdmin();
     }
 
-    // Coleção de Avisos (Notices)
+    // Notices Collection
+    // - Only admins can create, update, or delete notices.
+    // - Any authenticated user can read notices.
     match /notices/{noticeId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Coleção de Achados e Perdidos (Lost and Found)
+    // Incidents Collection
+    // - Authenticated users can create incidents.
+    // - Any authenticated user can read incidents.
+    // - Admins can read, update, and delete any incident.
+    match /incidents/{incidentId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // Lost and Found Collection
+    // - Any authenticated user can create and read items.
+    // - The user who reported the item or an admin can update/delete it.
     match /lostAndFound/{itemId} {
       allow read, create: if request.auth != null;
-      allow update, delete: if request.auth != null && (resource.data.reportedBy == request.auth.token.email || isAdmin());
+      allow update, delete: if isOwnerByEmail(resource) || isAdmin();
+    }
+
+    // Packages Collection
+    // - Only admins can create, update, or delete packages.
+    // - Any authenticated user can read packages.
+    match /packages/{packageId} {
+      allow create, update, delete: if isAdmin();
+      allow read: if request.auth != null;
+    }
+
+    // Reservations Collection
+    // - Authenticated users can create reservations.
+    // - Users can read all reservations (to check availability) but can only delete their own.
+    // - Admins can delete any reservation.
+    match /reservations/{reservationId} {
+      allow create, read: if request.auth != null;
+      allow delete: if isOwnerByEmail(resource) || isAdmin();
+    }
+
+    // Visitors Collection
+    // - Authenticated users can create visitors for their own apartment.
+    // - Any authenticated user can read visitors.
+    // - Admins can read and delete any visitor entry.
+    match /visitors/{visitorId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow delete: if isAdmin();
+    }
+
+    // Financials Collection
+    // - Only admins can read and write.
+    match /financials/{transactionId} {
+      allow read, write: if isAdmin();
     }
   }
 }

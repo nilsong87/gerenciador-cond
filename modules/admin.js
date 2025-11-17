@@ -1,10 +1,13 @@
 import { renderNavigation, setActiveNavItem, showAlert, initGlobalEventListeners } from './ui.js';
-import { userRole, currentUser } from './auth.js';
+import { userRole, currentUser, createUserByAdmin } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { db } from './firebase.js';
 import { cleanup } from './dashboard.js';
 import { renderNotices } from './notices.js';
 import { renderIncidents } from './incidents.js';
+import { renderFinancialPage as renderFinancial } from './financial.js';
+import { showBackupPanel as renderBackup } from './backup.js';
+import { showAnalyticsPanel as renderAnalytics } from './analytics.js';
 import { initAppEventListeners } from '../app.js';
 
 function renderAdmin() {
@@ -109,32 +112,31 @@ function renderAdmin() {
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button id="user-registration-btn" class="btn btn-premium btn-outline-success w-100 h-100 py-3">
+                                    <button id="user-registration-btn" class="btn btn-premium btn-outline-success w-100 h-100 py-3" style="color: blue;">
                                         <i class="fas fa-user-plus fa-2x mb-2"></i><br>
                                         Add Usuário
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button id="render-incidents-btn" class="btn btn-premium btn-outline-warning w-100 h-100 py-3">
+                                    <button id="render-incidents-btn" class="btn btn-premium btn-outline-warning w-100 h-100 py-3" style="color: blue;">
                                         <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
          
-                               Ocorrências
-                                    </button>
+                                                                        <span>Ocorrências</span>                                    </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button id="financial-panel-btn" class="btn btn-premium btn-outline-info w-100 h-100 py-3">
+                                    <button id="financial-panel-btn" class="btn btn-premium btn-outline-info w-100 h-100 py-3" style="color: blue;">
                                         <i class="fas fa-chart-line fa-2x mb-2"></i><br>
                                         Financeiro
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button id="backup-panel-btn" class="btn btn-premium btn-outline-danger w-100 h-100 py-3">
+                                    <button id="backup-panel-btn" class="btn btn-premium btn-outline-danger w-100 h-100 py-3" style="color: blue;">
                                         <i class="fas fa-database fa-2x mb-2"></i><br>
                                         Backup
                                     </button>
                                 </div>
                                 <div class="col-md-2 col-6 mb-3">
-                                    <button id="analytics-panel-btn" class="btn btn-premium btn-outline-dark w-100 h-100 py-3">
+                                    <button id="analytics-panel-btn" class="btn btn-premium btn-outline-dark w-100 h-100 py-3" style="color: blue;"ku>
                                         <i class="fas fa-chart-bar fa-2x mb-2"></i><br>
                                         Analytics
                                     </button>
@@ -213,23 +215,226 @@ function generateSystemReport() {
 }
 
 function showSystemSettings() {
-    showAlert('Funcionalidade de configurações do sistema ainda não implementada.', 'info');
+    const modalId = 'system-settings-modal';
+    // Remove existing modal if it's already in the DOM
+    const existingModal = document.getElementById(modalId);
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modalHtml = `
+        <div id="${modalId}" class="modal-premium confirm-modal show" style="display: block;">
+            <div class="modal-backdrop-premium"></div>
+            <div class="modal-dialog-premium modal-lg modal-dialog-centered">
+                <div class="modal-content-premium animate-bounce-in">
+                    <form id="system-settings-form">
+                        <div class="modal-header-premium">
+                            <h5 class="modal-title"><i class="fas fa-sliders-h me-2"></i>Configurações do Sistema</h5>
+                            <button type="button" class="btn-close-premium"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body-premium">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-gradient">Aparência</h6>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                                        <label class="form-check-label" for="dark-mode-toggle">Modo Escuro</label>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="app-name">Nome do Aplicativo</label>
+                                        <input type="text" id="app-name" class="form-control-premium" placeholder="Ex: Condomínio Feliz">
+                                    </div>
+                                    <div class="form-group mb-4">
+                                        <label for="app-logo">Logo do Aplicativo</label>
+                                        <input type="file" id="app-logo" class="form-control-premium">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-gradient">Notificações</h6>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notification-packages" checked>
+                                        <label class="form-check-label" for="notification-packages">Novas Encomendas</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notification-notices" checked>
+                                        <label class="form-check-label" for="notification-notices">Novos Avisos</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-4">
+                                        <input class="form-check-input" type="checkbox" id="notification-incidents">
+                                        <label class="form-check-label" for="notification-incidents">Novas Ocorrências</label>
+                                    </div>
+                                    <h6 class="text-gradient">Outros</h6>
+                                     <div class="form-group">
+                                        <label for="system-language">Idioma</label>
+                                        <select id="system-language" class="form-select-premium">
+                                            <option value="pt-BR">Português (Brasil)</option>
+                                            <option value="en-US" disabled>Inglês (Em breve)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer-premium">
+                            <button type="button" class="btn-premium btn-outline-secondary btn-cancel">Cancelar</button>
+                            <button type="submit" class="btn-premium btn-primary-premium">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modalElement = document.getElementById(modalId);
+    const closeModal = () => modalElement.remove();
+
+    modalElement.querySelector('.btn-close-premium').addEventListener('click', closeModal);
+    modalElement.querySelector('.btn-cancel').addEventListener('click', closeModal);
+    modalElement.querySelector('.modal-backdrop-premium').addEventListener('click', closeModal);
+
+    // Load current settings
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'dark') {
+        darkModeToggle.checked = true;
+    }
+    
+    db.collection('settings').doc('app').get().then(doc => {
+        if (doc.exists) {
+            const settings = doc.data();
+            document.getElementById('app-name').value = settings.appName || '';
+            // Load notification settings here if saved in firestore
+        }
+    });
+
+
+    document.getElementById('system-settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Theme
+        if (darkModeToggle.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+
+        // App Name
+        const appName = document.getElementById('app-name').value;
+        
+        // Here you would handle the logo upload, e.g., to Firebase Storage
+        const logoFile = document.getElementById('app-logo').files[0];
+        if (logoFile) {
+            showAlert('Upload de logo ainda não implementado.', 'info');
+        }
+
+        // Save settings to Firestore
+        try {
+            await db.collection('settings').doc('app').set({
+                appName: appName,
+                // Add other settings here
+            }, { merge: true });
+            showAlert('Configurações salvas com sucesso!', 'success');
+            closeModal();
+            // You might want to refresh parts of the UI here
+        } catch (error) {
+            console.error("Error saving settings: ", error);
+            showAlert('Erro ao salvar as configurações.', 'danger');
+        }
+    });
 }
 
 function showUserRegistration() {
-    showAlert('Funcionalidade de registro de usuário ainda não implementada.', 'info');
+    const modalId = 'user-registration-modal';
+    const modalHtml = `
+        <div id="${modalId}" class="modal-premium confirm-modal show" style="display: block;">
+            <div class="modal-backdrop-premium"></div>
+            <div class="modal-dialog-premium modal-dialog-centered">
+                <div class="modal-content-premium animate-bounce-in">
+                    <form id="user-registration-form">
+                        <div class="modal-header-premium">
+                            <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Novo Usuário</h5>
+                            <button type="button" class="btn-close-premium"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body-premium">
+                            <div class="form-group mb-3">
+                                <label for="user-name">Nome</label>
+                                <input type="text" id="user-name" class="form-control-premium" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="user-email">Email</label>
+                                <input type="email" id="user-email" class="form-control-premium" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="user-password">Senha</label>
+                                <input type="password" id="user-password" class="form-control-premium" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="user-apartment">Apartamento</label>
+                                <input type="text" id="user-apartment" class="form-control-premium" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="user-role">Função</label>
+                                <select id="user-role" class="form-control-premium">
+                                    <option value="resident">Morador</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer-premium">
+                            <button type="button" class="btn-premium btn-outline-secondary btn-cancel">Cancelar</button>
+                            <button type="submit" class="btn-premium btn-primary-premium">Criar Usuário</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modalElement = document.getElementById(modalId);
+    const closeModal = () => modalElement.remove();
+
+    modalElement.querySelector('.btn-close-premium').addEventListener('click', closeModal);
+    modalElement.querySelector('.btn-cancel').addEventListener('click', closeModal);
+    modalElement.querySelector('.modal-backdrop-premium').addEventListener('click', closeModal);
+
+    document.getElementById('user-registration-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('user-name').value;
+        const email = document.getElementById('user-email').value;
+        const password = document.getElementById('user-password').value;
+        const apartment = document.getElementById('user-apartment').value;
+        const role = document.getElementById('user-role').value;
+
+        if (!name || !email || !password || !apartment || !role) {
+            showAlert('Por favor, preencha todos os campos.', 'warning');
+            return;
+        }
+
+        const result = await createUserByAdmin(name, email, password, apartment, role);
+
+        if (result.success) {
+            showAlert(result.message, 'success');
+            closeModal();
+            // TODO: Refresh user list
+        } else {
+            showAlert(result.message, 'danger');
+        }
+    });
 }
 
 function showFinancialPanel() {
-    showAlert('Funcionalidade de painel financeiro ainda não implementada.', 'info');
+    renderFinancial();
 }
 
 function showBackupPanel() {
-    showAlert('Funcionalidade de painel de backup ainda não implementada.', 'info');
+    renderBackup();
 }
 
 function showAnalyticsPanel() {
-    showAlert('Funcionalidade de painel de análise ainda não implementada.', 'info');
+    renderAnalytics();
 }
 
 export { renderAdmin, generateSystemReport, showSystemSettings, showUserRegistration, showFinancialPanel, showBackupPanel, showAnalyticsPanel };

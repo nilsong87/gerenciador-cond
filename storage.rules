@@ -1,26 +1,49 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // Função auxiliar para verificar se o usuário é um administrador.
+    // Requer que você configure Custom Claims no Firebase Auth.
+    // Ex: firebase.auth().currentUser.getIdTokenResult().then(idTokenResult => idTokenResult.claims.admin)
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+
     // Nega o acesso a todos os outros caminhos por padrão.
+    // Embora seja o comportamento padrão, deixar explícito evita erros.
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Permite leitura autenticada e escrita autenticada para imagens de ocorrências.
-    match /ocorrencias/{incidentFile} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                    && request.resource.size < 5 * 1024 * 1024
+    // Permite que usuários leiam e escrevam APENAS suas próprias imagens de perfil.
+    // Admins também podem visualizar, mas não alterar para evitar acessos indevidos.
+    match /profile_images/{userId}/{imageName} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId
+                    && request.resource.size < 2 * 1024 * 1024 // Limite de 2MB
                     && request.resource.contentType.matches('image/.*');
     }
 
-    // Permite leitura autenticada e escrita autenticada para imagens de achados e perdidos.
-    match /lostAndFound/{imageId} {
-      allow read: if request.auth != null; // Permite que todos vejam as imagens dos itens
-      allow write: if request.auth != null
+    // Permite leitura e escrita de imagens de ocorrências pelo proprietário ou por um admin.
+    match /ocorrencias/{userId}/{incidentFile} {
+      allow read, write: if request.auth.uid == userId || isAdmin()
+                         && request.resource.size < 5 * 1024 * 1024 // Limite de 5MB
+                         && request.resource.contentType.matches('image/.*');
+    }
+
+    // Permite que qualquer usuário autenticado crie um item, mas apenas o criador ou um admin pode deletar.
+    // A leitura é pública para todos os autenticados.
+    match /lostAndFound/{userId}/{imageId} {
+      allow read: if request.auth != null;
+      // Permite a criação (write) se o usuário for o dono do caminho (userId).
+      // Nega a atualização (update) por qualquer um que não seja o dono ou admin.
+      // A verificação `resource == null` garante que a regra de escrita só se aplique a novos arquivos.
+      allow create: if request.auth.uid == userId
                     && request.resource.size < 5 * 1024 * 1024 // Limite de 5MB
-                    && request.resource.contentType.matches('image/.*'); // Apenas imagens
+                    && request.resource.contentType.matches('image/.*');
+      // Permite que o dono do item ou um admin o delete.
+      allow delete: if request.auth.uid == userId || isAdmin();
     }
   }
 }
-

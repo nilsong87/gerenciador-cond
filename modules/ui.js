@@ -1,3 +1,4 @@
+import { renderUserSettings } from './settings.js';
 let chartInstances = {};
 let firestoreListeners = {};
 
@@ -698,8 +699,9 @@ function showUserProfile() {
 }
 
 function showSettings() {
-    showAlert('Funcionalidade de configurações em desenvolvimento.', 'info');
+    renderUserSettings();
 }
+
 
 function toggleTheme() {
     const body = document.body;

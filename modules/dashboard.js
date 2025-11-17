@@ -5,6 +5,9 @@ import { renderPackages } from './packages.js';
 import { renderNotices } from './notices.js';
 import { renderIncidents } from './incidents.js';
 import { renderAdmin, generateSystemReport, showSystemSettings } from './admin.js';
+import { renderFinancialPage as renderFinancial } from './financial.js';
+import { showBackupPanel as renderBackup } from './backup.js';
+import { showAnalyticsPanel as renderAnalytics } from './analytics.js';
 import { initAppEventListeners } from '../app.js';
 
 function renderDashboard() {
@@ -144,6 +147,9 @@ function renderDashboard() {
         document.getElementById('quick-action-users').addEventListener('click', (e) => { e.preventDefault(); renderAdmin(); });
         document.getElementById('quick-action-report').addEventListener('click', (e) => { e.preventDefault(); generateSystemReport('system'); });
         document.getElementById('quick-action-settings').addEventListener('click', (e) => { e.preventDefault(); showSystemSettings(); });
+        document.getElementById('quick-action-financial').addEventListener('click', (e) => { e.preventDefault(); renderFinancial(); });
+        document.getElementById('quick-action-backup').addEventListener('click', (e) => { e.preventDefault(); renderBackup(); });
+        document.getElementById('quick-action-analytics').addEventListener('click', (e) => { e.preventDefault(); renderAnalytics(); });
     }
 }
 
@@ -178,22 +184,31 @@ function renderAdminCharts() {
                         <h5 class="card-title mb-0"><i class="fas fa-bolt me-2"></i>Ações Rápidas</h5>
                     </div>
                     <div class="card-body-premium quick-actions-grid">
-                        <a href="#" id="quick-action-packages" class="quick-action-item">
+                        <a href="#" id="quick-action-packages" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-box-open"></i><span>Encomendas</span>
                         </a>
-                        <a href="#" id="quick-action-notices" class="quick-action-item">
+                        <a href="#" id="quick-action-notices" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-bullhorn"></i><span>Novo Aviso</span>
                         </a>
-                        <a href="#" id="quick-action-incidents" class="quick-action-item">
+                        <a href="#" id="quick-action-incidents" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-exclamation-triangle"></i><span>Ocorrências</span>
                         </a>
-                        <a href="#" id="quick-action-users" class="quick-action-item">
+                        <a href="#" id="quick-action-users" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-users-cog"></i><span>Usuários</span>
                         </a>
-                        <a href="#" id="quick-action-report" class="quick-action-item">
+                        <a href="#" id="quick-action-financial" class="quick-action-item" style="height: 100px;">
+                            <i class="fas fa-dollar-sign"></i><span>Financeiro</span>
+                        </a>
+                        <a href="#" id="quick-action-backup" class="quick-action-item" style="height: 100px;">
+                            <i class="fas fa-save"></i><span>Backup</span>
+                        </a>
+                        <a href="#" id="quick-action-analytics" class="quick-action-item" style="height: 100px;">
+                            <i class="fas fa-chart-line"></i><span>Analytics</span>
+                        </a>
+                        <a href="#" id="quick-action-report" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-file-pdf"></i><span>Relatórios</span>
                         </a>
-                        <a href="#" id="quick-action-settings" class="quick-action-item">
+                        <a href="#" id="quick-action-settings" class="quick-action-item" style="height: 100px;">
                             <i class="fas fa-cog"></i><span>Ajustes</span>
                         </a>
                     </div>
@@ -225,6 +240,9 @@ function loadPackagesStats() {
         .onSnapshot(snapshot => {
             const element = document.getElementById('pending-packages');
             if (element) element.textContent = snapshot.size;
+        }, error => {
+            console.error("Error loading packages stats:", error);
+            showAlert('danger', 'Erro ao carregar estatísticas de encomendas.');
         });
     firestoreListeners.packagesStats = unsubscribe;
 }
@@ -236,6 +254,9 @@ function loadReservationsStats() {
         .onSnapshot(snapshot => {
             const element = document.getElementById('today-reservations');
             if (element) element.textContent = snapshot.size;
+        }, error => {
+            console.error("Error loading reservations stats:", error);
+            showAlert('danger', 'Erro ao carregar estatísticas de reservas.');
         });
     firestoreListeners.reservationsStats = unsubscribe;
 }
@@ -247,6 +268,9 @@ function loadVisitorsStats() {
         .onSnapshot(snapshot => {
             const element = document.getElementById('pending-visitors');
             if (element) element.textContent = snapshot.size;
+        }, error => {
+            console.error("Error loading visitors stats:", error);
+            showAlert('danger', 'Erro ao carregar estatísticas de visitantes.');
         });
     firestoreListeners.visitorsStats = unsubscribe;
 }
@@ -256,6 +280,9 @@ function loadIncidentsStats() {
         .onSnapshot(snapshot => {
             const element = document.getElementById('open-incidents');
             if (element) element.textContent = snapshot.size;
+        }, error => {
+            console.error("Error loading incidents stats:", error);
+            showAlert('danger', 'Erro ao carregar estatísticas de ocorrências.');
         });
     firestoreListeners.incidentsStats = unsubscribe;
 }
@@ -289,11 +316,15 @@ function loadRecentActivity() {
             html += renderActivityItem(activity);
         });
         activityFeed.innerHTML = html;
+    }).catch(error => {
+        console.error("Error loading recent activity:", error);
+        activityFeed.innerHTML = '<p class="text-danger">Erro ao carregar atividades recentes.</p>';
+        showAlert('danger', 'Erro ao carregar atividades recentes.');
     });
 }
 
 function renderActivityItem(activity) {
-    const time = activity.timestamp?.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '';
+    const time = activity.timestamp && typeof activity.timestamp.toDate === 'function' ? activity.timestamp.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
     let icon, text, iconColor;
 
     switch (activity.collection) {
@@ -353,18 +384,23 @@ function loadDashboardNotifications() {
         let html = '';
         snapshot.forEach(doc => {
             const notice = doc.data();
+            const noticeTime = notice.timestamp && typeof notice.timestamp.toDate === 'function' ? notice.timestamp.toDate().toLocaleDateString('pt-BR') : '';
             html += `
                 <div class="notification-item">
                     <div class="notification-icon"><i class="fas fa-bullhorn"></i></div>
                     <div class="notification-content">
                         <p class="mb-1"><strong>${notice.title}</strong></p>
                         <p class="mb-1 small text-muted">${notice.content.substring(0, 70)}${notice.content.length > 70 ? '...' : ''}</p>
-                        <small class="text-muted">${notice.timestamp.toDate().toLocaleDateString('pt-BR')}</small>
+                        <small class="text-muted">${noticeTime}</small>
                     </div>
                 </div>
             `;
         });
         notificationsList.innerHTML = html;
+    }).catch(error => {
+        console.error("Error loading dashboard notifications:", error);
+        notificationsList.innerHTML = '<p class="text-danger">Erro ao carregar avisos.</p>';
+        showAlert('danger', 'Erro ao carregar avisos do mural.');
     });
 }
 
@@ -429,6 +465,9 @@ function loadAdminChartsData() {
                         cutout: '70%'
                     }
                 });
+            }, error => {
+                console.error("Error loading reservations chart data:", error);
+                showAlert('danger', 'Erro ao carregar dados do gráfico de reservas.');
             });
     }
 
@@ -472,6 +511,9 @@ function loadAdminChartsData() {
                     cutout: '70%'
                 }
             });
+        }, error => {
+            console.error("Error loading incidents chart data:", error);
+            showAlert('danger', 'Erro ao carregar dados do gráfico de ocorrências.');
         });
     }
 }

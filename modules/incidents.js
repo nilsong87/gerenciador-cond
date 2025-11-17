@@ -155,7 +155,7 @@ function addIncident() {
     };
 
     if (imageFile) {
-        const storageRef = storage.ref(`ocorrencias/${Date.now()}_${imageFile.name}`);
+        const storageRef = storage.ref(`ocorrencias/${currentUser.uid}/${Date.now()}_${imageFile.name}`);
         storageRef.put(imageFile).then(snapshot => {
             snapshot.ref.getDownloadURL().then(downloadURL => {
                 incident.imageUrl = downloadURL;

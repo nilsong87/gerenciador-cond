@@ -369,6 +369,58 @@ function resetPassword() {
     showAlert('Funcionalidade de recuperação de senha em desenvolvimento', 'info');
 }
 
+// Configuração do Firebase para a app secundária
+const firebaseConfig = {
+  apiKey: "AIzaSyBLA2bniJbAydLGjG4bxcf3QhwgwoEyNiE",
+  authDomain: "gerenciamento-cond.firebaseapp.com",
+  projectId: "gerenciamento-cond",
+  storageBucket: "gerenciamento-cond.firebasestorage.app",
+  messagingSenderId: "830534759941",
+  appId: "1:830534759941:web:624a49abc9ab29f05dce6c",
+  measurementId: "G-KWY107ZY9M"
+};
+
+async function createUserByAdmin(name, email, password, apartment, role) {
+    const secondaryAppName = 'user-creation-app';
+    let secondaryApp;
+
+    // Garante que o app secundário não seja inicializado mais de uma vez
+    if (!firebase.apps.some(app => app.name === secondaryAppName)) {
+        secondaryApp = firebase.initializeApp(firebaseConfig, secondaryAppName);
+    } else {
+        secondaryApp = firebase.app(secondaryAppName);
+    }
+
+    const secondaryAuth = secondaryApp.auth();
+
+    try {
+        const userCredential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+        const newUser = userCredential.user;
+
+        // Salvar informações adicionais no Firestore
+        await db.collection('users').doc(newUser.uid).set({
+            name: name,
+            email: email,
+            apartment: apartment,
+            role: role,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        });
+
+        // Deslogar o novo usuário da instância secundária
+        await secondaryAuth.signOut();
+        // Opcional: deletar o app secundário se não for mais usado
+        // await secondaryApp.delete();
+
+        return { success: true, message: 'Usuário criado com sucesso!' };
+    } catch (error) {
+        console.error("Erro ao criar usuário pelo admin: ", error);
+        // Opcional: deletar o app secundário em caso de erro
+        // await secondaryApp.delete();
+        return { success: false, message: error.message };
+    }
+}
+
 // Exportar funções globais
 export { 
     auth, 
@@ -378,7 +430,8 @@ export {
     logout, 
     initPremiumApp, 
     renderLogin,
-    resetPassword
+    resetPassword,
+    createUserByAdmin
 };
 
 // Tornar funções globais para uso no HTML
